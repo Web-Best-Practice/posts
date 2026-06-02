@@ -1,0 +1,30 @@
+{
+    "name": "webbestpractice/posts",
+    "description": "Laravel package for managing blog posts",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Web Best Practice",
+            "email": "marcin@webbestpractice.co.uk"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Webbestpractice\\Posts\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Webbestpractice\\Posts\\PostsServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
