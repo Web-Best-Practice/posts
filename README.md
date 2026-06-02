@@ -1,59 +1,45 @@
-# webbestpractice/posts
 
-Laravel API package (`Webbestpractice\Posts`).
 
-## Requirements
+### Add a Custom repository:
 
-- PHP 8.2+
-- Laravel 12+
+    composer config repositories.repo-name vcs https://github.com/Web-Best-Practice/posts
 
-## Installation
+### Install package:
 
-### From GitHub (after publishing the repository)
+    composer require web-best-practice/posts
 
-Add the VCS repository to your Laravel app's `composer.json`:
+### Configure the Package:
 
-```json
-"repositories": [
-    {
-        "type": "vcs",
-        "url": "https://github.com/Web-Best-Practice/posts"
-    }
-],
-"require": {
-    "webbestpractice/posts": "^1.0"
-}
+```php
+<?php
+
+use App\Helpers\Image as ImageHelper;
+use Illuminate\Http\UploadedFile;
+
+return [
+
+    'secret' => 'key_CubvNVabgnB9kO8CKD9LQTCYZJFLEv64SCq1XT3xKCDWyVvO',
+    'class' => App\Models\Blog\Item::class,
+    'map' => [
+        'title' => 'title',
+        'content' => 'content',
+        'meta_title' => 'meta_title',
+        'meta_description' => 'meta_description',
+        'meta_keywords' => 'meta_keywords',
+        'created_at' => 'created_at',
+    ],
+    'image' => [
+        'column' => 'filename',
+        'callback' => function (UploadedFile $image, string $column) {
+            return ImageHelper::make($image)
+                ->uniqueName(new App\Models\Blog\Item, $column)
+                ->addDirectory('upload/blog', 2000)
+                ->addDirectory('upload/blog/thumbs', 500)
+                ->save();
+        }
+    ],
+    'extra' => ['summary' => 'content:100']
+];
 ```
 
-Then run:
 
-```bash
-composer update webbestpractice/posts
-php artisan vendor:publish --tag=posts-config
-```
-
-### Local development (path repository)
-
-While developing inside this monorepo, Composer uses a path repository (see the host app's `composer.json`).
-
-```bash
-composer update webbestpractice/posts
-```
-
-## API routes
-
-Routes are defined in `routes/api.php` and registered with these defaults (see `config/posts.php`):
-
-| Setting | Default |
-|---------|---------|
-| URL prefix | `/api/posts` |
-| Route name prefix | `posts.` |
-| Middleware | `api` |
-
-Disable package routes with `POSTS_ROUTES_ENABLED=false` in `.env`.
-
-Example: `GET /api/posts` → `posts.index`
-
-## License
-
-MIT
