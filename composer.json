@@ -1,5 +1,5 @@
 {
-    "name": "webbestpractice/posts",
+    "name": "web-best-practice/posts",
     "description": "Laravel package for managing blog posts",
     "type": "library",
     "license": "MIT",
@@ -21,7 +21,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Webbestpractice\\Posts\\PostsServiceProvider"
+                "WebBestPractice\\Posts\\PostsServiceProvider"
             ]
         }
     },
