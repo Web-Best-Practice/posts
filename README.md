@@ -8,7 +8,7 @@
 
     composer require web-best-practice/posts
 
-### Publish config file:
+### Publish the config file:
 
     php artisan vendor:publish --tag=posts-config
 
