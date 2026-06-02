@@ -1,6 +1,6 @@
 <?php
 
-namespace Webbestpractice\Posts;
+namespace WebBestPractice\Posts;
 
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
