@@ -2,6 +2,7 @@
 
 namespace WebBestPractice\Posts\Http\Controllers;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -47,11 +48,19 @@ class IndexController extends Controller
         $titleColumn = config('posts.map.title');
         if ($titleColumn && Schema::hasColumn($model->getTable(), $titleColumn)) {
             $data[$titleColumn] = $validated['title'];
+        } else {
+            return response()->json([
+                'message' => 'Title column not found.',
+            ], 400);
         }
 
         $contentColumn = config('posts.map.content');
         if ($contentColumn && Schema::hasColumn($model->getTable(), $contentColumn)) {
-            $data['content'] = $validated['content'];
+            $data[$contentColumn] = $validated['content'];
+        } else {
+            return response()->json([
+                'message' => 'Content column not found.',
+            ], 400);
         }
 
         $metaTitleColumn = config('posts.map.meta_title');
@@ -74,20 +83,31 @@ class IndexController extends Controller
             $data[$publishedAtColumn] = now();
         }
 
-        $imageSection = config('posts.image');
+        $imagesSection = config('posts.images');
 
-        if($imageSection) {
-            $imageColumn = config('posts.image.column');
-            $imageCallback = config('posts.image.callback');
+        $image = array_key_exists('image', $validated)
+            ? $validated['image'] : null;
 
-            if ($imageColumn
-                && Schema::hasColumn($model->getTable(), $imageColumn)
-                && $imageCallback
-                && is_callable($imageCallback)
-                && $validated['image']) {
-                $image = $validated['image'];
+        if($imagesSection && is_array($imagesSection)) {
 
-                $data[$imageColumn] = call_user_func($imageCallback, $image, $imageColumn);
+            foreach($imagesSection as $imageSection) {
+                $imageColumn = $imageSection['column'];
+                $imageCallback = $imageSection['callback'];
+
+                if ($imageColumn
+                    && Schema::hasColumn($model->getTable(), $imageColumn)
+                    && $imageCallback
+                    && is_callable($imageCallback)
+                    && $image)
+                {
+                    try {
+                        $data[$imageColumn] = call_user_func($imageCallback, $image, $imageColumn);
+                    } catch (\Throwable $e) {
+                        return response()->json([
+                            'message' => $e->getMessage(),
+                        ], 400);
+                    }
+                }
             }
         }
 
@@ -101,13 +121,39 @@ class IndexController extends Controller
                     continue;
                 }
 
-                list($mapToColumn, $maxCharacters) = explode(':', $mapTo);
+                [$main, $switches] = array_pad(explode(',', $mapTo, 2), 2, null);
 
-                $data[$column] = Str::limit($validated[$mapToColumn], $maxCharacters);
+                [$mapToColumn, $maxCharacters] = array_pad(explode(':', $main, 2), 2, null);
+
+                $value = $validated[$mapToColumn];
+
+                if ($switches) {
+                    $switches = explode(',', $switches);
+
+                    foreach ($switches as $switch) {
+                        switch ($switch) {
+                            case 'no-html':
+                                $value = strip_tags($value);
+                                break;
+                        }
+                    }
+                }
+
+                if ($maxCharacters !== null) {
+                    $value = Str::limit($value, (int) $maxCharacters);
+                }
+
+                $data[$column] = $value;
             }
         }
 
-        $item = $model->create($data);
+        try {
+            $item = $model->create($data);
+        } catch (QueryException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 400);
+        }
 
         return response()->json([
             'data' => $item->toArray(),
