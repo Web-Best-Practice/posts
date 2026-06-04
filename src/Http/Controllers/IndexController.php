@@ -1,8 +1,7 @@
 <?php
 
-namespace Webbestpractice\Posts\Http\Controllers;
+namespace WebBestPractice\Posts\Http\Controllers;
 
-use App\Helpers\Image as ImageHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -68,6 +67,11 @@ class IndexController extends Controller
         $metaDescriptionColumn = config('posts.map.meta_description');
         if ($metaDescriptionColumn && Schema::hasColumn($model->getTable(), $metaDescriptionColumn)) {
             $data[$metaDescriptionColumn] = $validated['meta_description'];
+        }
+
+        $publishedAtColumn = config('posts.map.published_at');
+        if ($publishedAtColumn && Schema::hasColumn($model->getTable(), $publishedAtColumn)) {
+            $data[$publishedAtColumn] = now();
         }
 
         $imageSection = config('posts.image');

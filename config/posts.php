@@ -13,7 +13,7 @@ return [
         'meta_title' => 'meta_title',
         'meta_description' => 'meta_description',
         'meta_keywords' => 'meta_keywords',
-        'created_at' => 'created_at',
+        'published_at' => 'published_at',
     ],
     'image' => [
         'column' => 'filename',
