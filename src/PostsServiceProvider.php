@@ -2,7 +2,6 @@
 
 namespace WebBestPractice\Posts;
 
-use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
@@ -15,8 +14,6 @@ class PostsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        ValidateCsrfToken::except('_posts/create');
-
         Route::middleware('api')
             ->prefix('_posts/create')
             ->name('create')
