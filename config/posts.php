@@ -13,7 +13,8 @@ return [
         'meta_title' => 'meta_title',
         'meta_description' => 'meta_description',
         'meta_keywords' => 'meta_keywords',
-        'published_at' => null //'published_at'
+        'published_at' => null, //'date_now'
+        'summary' => ['column' => 'content', 'options' => ['no-html', 'max_characters:100']],
     ],
     'images' => [
         [
@@ -36,6 +37,5 @@ return [
                     ->save();
             }
         ],*/
-    ],
-    'extra' => null //['summary' => 'content:100,no-html']
+    ]
 ];
