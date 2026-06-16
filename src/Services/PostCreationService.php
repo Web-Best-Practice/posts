@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class PostCreationService
 {
-    private array $requiredColumns = ['title', 'content', 'meta_title', 'meta_keywords', 'meta_description'];
+    private array $requiredRequestFields = ['title', 'content', 'meta_title', 'meta_keywords', 'meta_description'];
 
     /**
      * Validate the request secret against the configured posts.secret value.
@@ -72,42 +72,61 @@ class PostCreationService
     }
 
     /**
-     * Ensure every required request field has a mapping entry in posts.map config.
+     * Ensure every required request field is used as a mapping source in posts.map config.
      *
-     * @throws Exception With code 400 when a required column is missing from the map.
+     * @throws Exception With code 400 when a required request field is not mapped.
      */
     private function assertRequiredColumnsInMap(Collection $columnsToMap): void
     {
-        foreach ($this->requiredColumns as $requiredColumn) {
-            if (! $columnsToMap->keys()->contains($requiredColumn)) {
-                throw new Exception("Column '{$requiredColumn}' not found.", 400);
+        foreach ($this->requiredRequestFields as $requiredRequestField) {
+            $isMapped = $columnsToMap->contains(
+                fn (mixed $mapping) => $this->resolveSourceRequestField($mapping) === $requiredRequestField
+            );
+
+            if (! $isMapped) {
+                throw new Exception("Request field '{$requiredRequestField}' is not mapped.", 400);
             }
         }
     }
 
     /**
-     * Ensure mapped columns for required fields actually exist in the database table.
+     * Ensure database columns targeted by required request fields exist in the table.
      *
      * @throws Exception With code 400 when a mapped column is missing from the table.
      */
     private function assertRequiredColumnsInDatabase(Collection $columnsToMap, Collection $existingColumns): void
     {
-        foreach ($this->requiredColumns as $requiredColumn) {
-            $mappedColumn = $columnsToMap->get($requiredColumn);
-            $column = null;
+        foreach ($this->requiredRequestFields as $requiredRequestField) {
+            $targetColumns = $columnsToMap
+                ->filter(fn (mixed $mapping) => $this->resolveSourceRequestField($mapping) === $requiredRequestField)
+                ->keys();
 
-            if (! $mappedColumn) {
-                throw new Exception("Column '{$requiredColumn}' not found.", 400);
-            } elseif (is_array($mappedColumn)) {
-                $column = $mappedColumn['column'];
-            } else {
-                $column = $mappedColumn;
+            if ($targetColumns->isEmpty()) {
+                throw new Exception("Request field '{$requiredRequestField}' is not mapped.", 400);
             }
 
-            if (! $existingColumns->contains($column)) {
-                throw new Exception("Column '{$column}' not found.", 400);
+            foreach ($targetColumns as $column) {
+                if (! $existingColumns->contains($column)) {
+                    throw new Exception("Column '{$column}' not found.", 400);
+                }
             }
         }
+    }
+
+    /**
+     * Resolve the request field a mapping reads from, if any.
+     */
+    private function resolveSourceRequestField(mixed $mapping): ?string
+    {
+        if (is_string($mapping) && $mapping !== 'date_now') {
+            return $mapping;
+        }
+
+        if (is_array($mapping) && array_key_exists('column', $mapping)) {
+            return $mapping['column'];
+        }
+
+        return null;
     }
 
     /**

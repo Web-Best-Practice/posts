@@ -61,7 +61,8 @@ Error (`401` or `400`):
 ```
 
 - `401` — invalid secret or missing post model class
-- `400` — missing column mapping, database error, or image processing failure
+- `400` — unmapped request field, missing database column, persistence error, or image processing failure
+
 ## Configuration
 
 Publish and edit `config/posts.php`:
@@ -80,7 +81,7 @@ return [
     // Eloquent model used to create posts
     'class' => App\Models\Blog\Item::class,
  
-    // Maps request/model fields to database columns
+    // Maps database columns to request fields and mapping rules
     'map' => [
         'title'            => 'title',
         'content'          => 'content',
@@ -92,6 +93,8 @@ return [
             'column'  => 'content',
             'options' => ['no-html', 'max_characters:100'],
         ],
+        // Map API `title` to a database `name` column on another site:
+        // 'name' => 'title',
         // Static value example:
         // 'custom_field' => ['value' => 'value1'],
         // Callable example:
@@ -141,19 +144,36 @@ Fully qualified Eloquent model class. The model must exist and use a valid datab
 
 Defines how incoming data is transformed before `create()` is called.
 
-The following request fields are required in `map` and must resolve to existing database columns:
+Each entry maps a **database column** (array key) to a **request field or mapping rule** (array value).
+
+The API always sends these request fields:
 
 - `title`
 - `content`
 - `meta_title`
 - `meta_keywords`
 - `meta_description`
+
+Each of them must appear as a mapping **source** in `map`. The corresponding **database column** (the map key) must exist in your table.
+
+For example, if your table uses `name` instead of `title`, map the API field like this:
+
+```php
+'name' => 'title',
+```
+
 #### Mapping formats
 
-**Direct mapping** — copy a request field to a model column:
+**Direct mapping** — copy a request field to a database column:
 
 ```php
 'title' => 'title',
+```
+
+When the request and database column names differ:
+
+```php
+'name' => 'title',
 ```
 
 **Skip a mapping** — set to `null` to ignore an entry entirely:
@@ -182,7 +202,7 @@ The following request fields are required in `map` and must resolve to existing 
 },
 ```
 
-**Derived field with options** — build a model column from another request field with transformations applied:
+**Derived field with options** — build a database column from another request field with transformations applied:
 
 ```php
 'summary' => [
@@ -191,7 +211,7 @@ The following request fields are required in `map` and must resolve to existing 
 ],
 ```
 
-The array key is the target model/database column. `column` refers to the source request field. Options are applied in order.
+The array key is the target database column. `column` refers to the source request field. Options are applied in order.
 
 Supported options:
 
