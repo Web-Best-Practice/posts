@@ -5,7 +5,7 @@ use Illuminate\Http\UploadedFile;
 
 return [
 
-    'secret' => env('BLOG_SECRET'),
+    'secret' => env('POSTS_SECRET'),
     'class' => App\Models\Blog\Item::class,
     'map' => [
         'title' => 'title',
